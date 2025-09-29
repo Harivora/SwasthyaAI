@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://placehold.co; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <title>SwasthyaAI – Personalized Ayurveda for Your Health</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0c0a18; color: #e5e7eb; font-size: 16px; }
+        #spotlight { position: fixed; top: 0; left: 0; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(29, 78, 216, 0.15), transparent 60%); pointer-events: none; transform: translate(-50%, -50%); z-index: 100; transition: opacity 0.3s; opacity: 0; }
+        body:hover #spotlight { opacity: 1; }
+        .gradient-text { background: linear-gradient(90deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cta-button { background: linear-gradient(90deg, #10b981, #2563eb); background-size: 200% 100%; transition: all 0.4s ease; box-shadow: 0 4px 15px rgba(20, 184, 131, 0.1); }
+        .cta-button:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(20, 184, 131, 0.3); background-position: right center; }
+        .card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card:hover:not(.no-hover) { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        .pricing-card.popular { border-color: #10b981; }
+        .popular-banner { position: absolute; top: 14px; right: -34px; background-color: #10b981; color: white; font-size: 0.75rem; font-weight: bold; padding: 5px 35px; transform: rotate(45deg); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        #background-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.7; }
+        .modal-input { background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); transition: border-color 0.3s, box-shadow 0.3s; }
+        .profile-input { background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); }
+        .profile-input:disabled { background-color: transparent; border-color: transparent; -webkit-text-fill-color: #e5e7eb; opacity: 1; }
+        #password-strength-bar { height: 5px; width: 0%; background-color: #ef4444; transition: width 0.3s, background-color 0.3s; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .nav-link { position: relative; transition: color 0.3s; }
+        .nav-link:hover { color: #10b981; }
+        .nav-link::after { content: ''; position: absolute; width: 100%; transform: scaleX(0); height: 2px; bottom: -4px; left: 0; background-color: #10b981; transform-origin: bottom right; transition: transform 0.3s ease-out; }
+        .nav-link:hover::after { transform: scaleX(1); transform-origin: bottom left; }
+        @keyframes fadeInSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .team-card { animation: fadeInSlideUp 0.5s ease-out forwards; opacity: 0; }
+        *:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; border-radius: 6px; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <div id="spotlight"></div>
+    <canvas id="background-canvas"></canvas>
+
+    <header class="fixed top-0 left-0 right-0 z-50 bg-slate-900/50 backdrop-blur-md border-b border-gray-800">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <a href="#" id="logo-btn" class="text-2xl font-bold gradient-text cursor-pointer">SwasthyaAI</a>
+            <nav class="hidden md:flex space-x-6 items-center text-lg">
+                <a href="#about" class="nav-link main-nav-link">About</a>
+                <a href="#features" class="nav-link main-nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link main-nav-link">Process</a>
+                <button id="profile-nav-btn" class="hidden nav-link">My Profile</button>
+                <a href="#" id="get-plan-nav-btn" class="cta-button text-white font-semibold py-2 px-5 rounded-lg shadow-lg text-base">Get Your Plan</a>
+                <button id="logout-btn" class="hidden bg-red-500/80 hover:bg-red-600 text-white font-semibold py-2 px-5 rounded-lg shadow-lg text-base transition">Logout</button>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-3xl">☰</button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-900/80 p-4">
+             <a href="#about" class="block py-2 text-lg main-nav-link">About</a>
+             <a href="#features" class="block py-2 text-lg main-nav-link">Features</a>
+             <a href="#how-it-works" class="block py-2 text-lg main-nav-link">Process</a>
+             <button id="profile-mobile-btn" class="hidden w-full text-left py-2 text-lg">My Profile</button>
+             <a href="#" id="get-plan-mobile-btn" class="block py-3 mt-2 cta-button text-white font-semibold text-center rounded-lg text-lg">Get Your Plan</a>
+        </div>
+    </header>
+
+    <div id="main-content">
+        <main class="pt-20">
+            <section class="min-h-screen flex items-center justify-center text-center -mt-20">
+                <div class="container mx-auto px-4 z-10"><div class="animate-float"><h2 class="text-4xl md:text-6xl font-bold leading-tight mb-4">Personalized Ayurveda for Your Health, <br><span class="gradient-text">Powered by AI</span></h2><p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8">Get AI-powered Ayurvedic diet & lifestyle recommendations tailored to your unique body, mind, and environment.</p><a href="#" id="get-plan-hero-btn" class="cta-button inline-block text-white font-bold py-4 px-10 rounded-full text-xl shadow-xl">Generate My Free Diet Plan</a></div></div>
+            </section>
+            <section id="about" class="py-24"><div class="container mx-auto px-4 text-center"><h3 class="text-4xl font-bold mb-6">The Future of Holistic Wellness is Here</h3><p class="text-lg text-gray-400 max-w-3xl mx-auto">Modern lifestyles often lead to health imbalances that generic diet apps can't solve. SwasthyaAI bridges the gap between ancient Ayurvedic wisdom and modern artificial intelligence to provide truly personalized, effective, and practical health guidance.</p></div></section>
+            <section id="features" class="py-24"><div class="container mx-auto px-4"><h3 class="text-4xl font-bold text-center mb-16">Our Core Features</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"><div class="card p-6 rounded-xl text-center no-hover"><h4 class="text-2xl font-semibold mb-3 gradient-text">Symptom Input</h4><p class="text-gray-400">Log symptoms in detail for a precise diagnosis.</p></div><div class="card p-6 rounded-xl text-center no-hover"><h4 class="text-2xl font-semibold mb-3 gradient-text">Health Sync</h4><p class="text-gray-400">Integrate real-time data from your health devices.</p></div><div class="card p-6 rounded-xl text-center no-hover"><h4 class="text-2xl font-semibold mb-3 gradient-text">AI Diet Plans</h4><p class="text-gray-400">Receive customized charts for your Dosha and goals.</p></div><div class="card p-6 rounded-xl text-center no-hover"><h4 class="text-2xl font-semibold mb-3 gradient-text">Preventive Care</h4><p class="text-gray-400">Build a balanced lifestyle to prevent future ailments.</p></div></div></div></section>
+            <section id="how-it-works" class="py-24"><div class="container mx-auto px-4 text-center"><h3 class="text-4xl font-bold mb-16">Get Your Plan in 3 Simple Steps</h3><div class="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-16"><div class="card flex-1 max-w-sm p-6"><div class="bg-gray-800/50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4 border-2 border-emerald-500/50"><svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></div><h4 class="text-2xl font-semibold mb-2">1. Share Details</h4><p class="text-gray-400">Input symptoms, lifestyle habits, and health data.</p></div><div class="card flex-1 max-w-sm p-6"><div class="bg-gray-800/50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4 border-2 border-blue-500/50"><svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3m-3.636-3.636l-1.414-1.414m10.91-2.828l-1.414 1.414M18.364 18.364l-1.414-1.414M5.636 18.364l1.414-1.414"></path></svg></div><h4 class="text-2xl font-semibold mb-2">2. AI Analysis</h4><p class="text-gray-400">Our engine analyzes your data with Ayurvedic intelligence.</p></div><div class="card flex-1 max-w-sm p-6"><div class="bg-gray-800/50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4 border-2 border-purple-500/50"><svg class="w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div><h4 class="text-2xl font-semibold mb-2">3. Receive Plan</h4><p class="text-gray-400">Get a dynamic, personalized diet and lifestyle plan.</p></div></div></div></section>
+        </main>
+    </div>
+
+    <div id="app-content" class="hidden">
+        
+        <section id="auth-page" class="hidden min-h-screen flex items-center justify-center pt-20 px-4">
+             <div class="w-full max-w-md"><div id="login-form-container"><div class="card p-8 md:p-10 rounded-2xl"><h2 class="text-3xl font-bold text-center mb-6 gradient-text">Login</h2><form id="login-form"><div class="mb-4"><label for="login-email" class="block mb-2">Email</label><input type="email" id="login-email" class="w-full p-3 rounded-lg modal-input" required></div><div class="mb-6"><label for="login-password" class="block mb-2">Password</label><input type="password" id="login-password" class="w-full p-3 rounded-lg modal-input" required></div><button type="submit" class="w-full cta-button text-white font-bold py-3 rounded-lg text-lg">Login</button></form><p class="text-center mt-6">Don't have an account? <button id="show-signup-btn" class="text-emerald-400 hover:underline font-semibold">Sign Up</button></p><p class="text-xs text-gray-500 text-center mt-4">Security Notice: This is a demo. Do not use real passwords.</p></div></div><div id="signup-form-container" class="hidden"><div class="card p-8 md:p-10 rounded-2xl"><h2 class="text-3xl font-bold text-center mb-6 gradient-text">Create Account</h2><form id="signup-form"><div class="mb-4"><label for="signup-name" class="block mb-2">Name</label><input type="text" id="signup-name" class="w-full p-3 rounded-lg modal-input" required></div><div class="mb-4"><label for="signup-email" class="block mb-2">Email</label><input type="email" id="signup-email" class="w-full p-3 rounded-lg modal-input" required></div><div class="mb-2"><label for="signup-password" class="block mb-2">Password</label><input type="password" id="signup-password" class="w-full p-3 rounded-lg modal-input" required></div><div class="w-full bg-gray-700 rounded-full mb-4"><div id="password-strength-bar" class="rounded-full"></div></div><p id="password-strength-text" class="text-sm text-gray-400 mb-6 -mt-3 ml-1"></p><button type="submit" class="w-full cta-button text-white font-bold py-3 rounded-lg text-lg">Sign Up</button></form><p class="text-center mt-6">Already have an account? <button id="show-login-btn" class="text-emerald-400 hover:underline font-semibold">Login</button></p><p class="text-xs text-gray-500 text-center mt-4">Security Notice: This is a demo. Do not use real passwords.</p></div></div></div>
+        </section>
+
+        <section id="verification-page" class="hidden min-h-screen flex items-center justify-center pt-20 px-4">
+            <div class="w-full max-w-md"><div class="card p-8 md:p-10 rounded-2xl"><h2 class="text-3xl font-bold text-center mb-4 gradient-text">Verify Your Email</h2><p class="text-center text-gray-400 mb-6">A verification code has been sent to you. Please enter it below.</p><form id="verify-form"><div class="mb-4"><label for="verify-code" class="block mb-2">6-Digit Code</label><input type="text" id="verify-code" class="w-full p-3 rounded-lg modal-input text-center text-2xl tracking-[.5em]" maxlength="6" required></div><p id="verify-error" class="text-red-500 text-center text-sm mb-4 hidden"></p><button type="submit" class="w-full cta-button text-white font-bold py-3 rounded-lg text-lg">Verify</button></form></div></div>
+        </section>
+
+        <section id="profile-page" class="hidden min-h-screen pt-24 pb-12 px-4">
+            <div class="container mx-auto max-w-5xl"><div class="flex justify-between items-center mb-8"><button id="profile-back-btn" class="flex items-center gap-2 text-lg text-gray-400 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>Back</button><div id="profile-view-buttons"><button id="edit-profile-btn" class="cta-button text-white font-semibold py-2 px-6 rounded-lg">Edit Profile</button></div><div id="profile-edit-buttons" class="hidden space-x-4"><button id="cancel-edit-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition">Cancel</button><button id="save-profile-btn" class="cta-button text-white font-semibold py-2 px-6 rounded-lg">Save Changes</button></div></div><h2 class="text-4xl font-bold text-center -mt-8 mb-8">My Health Profile</h2><form id="profile-form"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="space-y-8"><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-4 gradient-text">Basic Information</h3><div class="space-y-4"><div><label class="text-gray-400">Full Name</label><input type="text" id="profile-full_name" class="w-full p-2 rounded profile-input text-lg" disabled></div><div><label class="text-gray-400">Email Address</label><input type="email" id="profile-email" class="w-full p-2 rounded profile-input text-lg" disabled></div><div class="grid grid-cols-2 gap-4"><div><label class="text-gray-400">Age</label><input type="number" id="profile-age" class="w-full p-2 rounded profile-input text-lg" disabled></div><div><label class="text-gray-400">Gender</label><select id="profile-gender" class="w-full p-2 rounded profile-input text-lg" disabled><option>Male</option><option>Female</option><option>Other</option></select></div></div></div></div><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-4 gradient-text">Physical Metrics</h3><div class="grid grid-cols-2 gap-4"><div><label class="text-gray-400">Height (cm)</label><input type="number" id="profile-height_cm" class="w-full p-2 rounded profile-input text-lg" disabled></div><div><label class="text-gray-400">Weight (kg)</label><input type="number" id="profile-weight_kg" class="w-full p-2 rounded profile-input text-lg" disabled></div></div></div><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-4 gradient-text">Medical History</h3><div class="space-y-4"><div><label class="text-gray-400">Chronic Conditions (comma-separated)</label><input type="text" id="profile-chronic_conditions" placeholder="e.g. Diabetes, Hypertension" class="w-full p-2 rounded profile-input text-lg" disabled></div><div><label class="text-gray-400">Known Allergies (comma-separated)</label><input type="text" id="profile-allergies" placeholder="e.g. Peanuts, Gluten" class="w-full p-2 rounded profile-input text-lg" disabled></div></div></div></div><div class="space-y-8"><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-4 gradient-text">Lifestyle & Dietary Habits</h3><div class="space-y-4"><div><label class="text-gray-400">Occupation</label><select id="profile-occupation" class="w-full p-2 rounded profile-input text-lg" disabled><option>Office/Sedentary</option><option>Field/Active</option><option>Student</option><option>Homemaker</option></select></div><div><label class="text-gray-400">Food Preference</label><select id="profile-food_preference" class="w-full p-2 rounded profile-input text-lg" disabled><option>Vegetarian</option><option>Vegan</option><option>Non-Vegetarian</option></select></div><div><label class="text-gray-400">Preferred Cuisine</label><select id="profile-cuisine" class="w-full p-2 rounded profile-input text-lg" disabled><option>Indian</option><option>Continental</option><option>Multicultural</option></select></div><div><label class="text-gray-400">Daily Water Intake</label><select id="profile-water_intake" class="w-full p-2 rounded profile-input text-lg" disabled><option>Less than 1 liter</option><option>1-2 liters</option><option>More than 2 liters</option></select></div></div></div><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-4 gradient-text">Ayurvedic Profile (Optional)</h3><p class="text-sm text-gray-400 mb-4">Determined by an Ayurvedic practitioner. Leave as 'Undetermined' if unsure.</p><div class="space-y-4"><div><label class="text-gray-400">Prakriti (Body Type)</label><select id="profile-prakriti" class="w-full p-2 rounded profile-input text-lg" disabled><option>Undetermined</option><option>Vata</option><option>Pitta</option><option>Kapha</option><option>Vata-Pitta</option><option>Pitta-Kapha</option><option>Vata-Kapha</option></select></div><div><label class="text-gray-400">Agni (Digestive Fire)</label><select id="profile-agni" class="w-full p-2 rounded profile-input text-lg" disabled><option>Undetermined</option><option>Sama (Balanced)</option><option>Visham (Irregular)</option><option>Tikshna (High)</option><option>Manda (Slow)</option></select></div></div></div></div></div></form></div>
+        </section>
+
+        <section id="generator-page" class="hidden min-h-screen flex items-center justify-center pt-24 pb-12 px-4">
+             <div id="generator-input-section" class="max-w-4xl mx-auto w-full"><h3 id="generator-greeting" class="text-4xl font-bold text-center mb-2"></h3><p class="text-center text-gray-400 text-lg mb-8">Let's create a plan for your current needs.</p><div class="card p-8 md:p-12 rounded-2xl"><div class="mb-8"><label for="symptoms" class="block mb-2 text-md font-medium">What is your primary symptom or health goal right now?</label><input type="text" id="symptoms" placeholder="e.g., 'To reduce bloating and acidity'" class="w-full p-4 rounded-lg modal-input text-lg"></div><button id="generate-plan-btn" class="w-full cta-button text-white font-bold py-4 px-8 rounded-lg text-xl flex items-center justify-center gap-2"><span>Generate Diet Plan</span><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></button><p id="plan-limit-text" class="text-center mt-4 text-gray-400"></p></div></div>
+             <div id="limit-reached-section" class="hidden max-w-2xl mx-auto text-center"><div class="card p-8 md:p-12 rounded-2xl"><h3 class="text-3xl font-bold mb-4 gradient-text">Free Limit Reached</h3><p class="text-lg text-gray-300 mb-6">You have used your 10 free diet plan generations. For unlimited personalized plans, advanced tracking, and direct consultations, please subscribe to our premium plan.</p><button id="subscribe-now-btn" class="cta-button text-white font-bold py-3 px-8 rounded-lg text-lg">View Plans</button></div></div>
+        </section>
+        
+        <section id="subscription-page" class="hidden min-h-screen pt-24 pb-12 px-4">
+            <div class="container mx-auto max-w-6xl"><button id="subscription-back-btn" class="flex items-center gap-2 text-lg text-gray-400 hover:text-white transition mb-8"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>Back</button><h2 class="text-4xl font-bold text-center -mt-12 mb-6">Choose Your Plan</h2><p class="text-center text-gray-400 text-lg mb-12">Unlock your full wellness potential with unlimited access to personalized plans.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"><div class="card pricing-card p-6 rounded-xl flex flex-col text-center"><h3 class="text-2xl font-semibold mb-2">2 Months</h3><p class="text-4xl font-bold mb-4">₹499</p><ul class="space-y-2 text-gray-400 mb-6 text-left list-disc list-inside"><li>Unlimited Diet Plans</li><li>Profile Tracking</li><li>Email Support</li></ul><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Subscribe</button></div><div class="card pricing-card p-6 rounded-xl flex flex-col text-center"><h3 class="text-2xl font-semibold mb-2">6 Months</h3><p class="text-4xl font-bold mb-4">₹1199</p><ul class="space-y-2 text-gray-400 mb-6 text-left list-disc list-inside"><li>Unlimited Diet Plans</li><li>Profile Tracking</li><li>Priority Email Support</li></ul><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Subscribe</button></div><div class="card pricing-card popular p-6 rounded-xl flex flex-col text-center relative overflow-hidden"><div class="popular-banner">Popular</div><h3 class="text-2xl font-semibold mb-2">9 Months</h3><p class="text-4xl font-bold mb-4">₹1599</p><ul class="space-y-2 text-gray-400 mb-6 text-left list-disc list-inside"><li>All 6-Month Features</li><li>Seasonal Plan Updates</li><li>Early Access to New Features</li></ul><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Subscribe</button></div><div class="card pricing-card p-6 rounded-xl flex flex-col text-center"><h3 class="text-2xl font-semibold mb-2">12 Months</h3><p class="text-4xl font-bold mb-4">₹1999</p><ul class="space-y-2 text-gray-400 mb-6 text-left list-disc list-inside"><li>All 9-Month Features</li><li>1 Live Consultation</li><li>Personalized Yoga Tips</li></ul><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Subscribe</button></div></div>
+                <h3 class="text-3xl font-bold text-center mt-20 mb-6">Or, Buy Credits for One-Time Plans</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-4xl mx-auto"><div class="card pricing-card p-6 rounded-xl text-center flex flex-col"><h3 class="text-2xl font-semibold">50 Credits</h3><p class="text-3xl font-bold my-4">₹20</p><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Buy Now</button></div><div class="card pricing-card p-6 rounded-xl text-center flex flex-col"><h3 class="text-2xl font-semibold">100 Credits</h3><p class="text-3xl font-bold my-4">₹40</p><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Buy Now</button></div><div class="card pricing-card p-6 rounded-xl text-center flex flex-col"><h3 class="text-2xl font-semibold">200 Credits</h3><p class="text-3xl font-bold my-4">₹80</p><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Buy Now</button></div><div class="card pricing-card p-6 rounded-xl text-center flex flex-col"><h3 class="text-2xl font-semibold">500 Credits</h3><p class="text-3xl font-bold my-4">₹190 <span class="text-sm text-emerald-400">(5% Off)</span></p><button class="mt-auto cta-button text-white font-semibold py-3 rounded-lg purchase-btn">Buy Now</button></div></div>
+            </div>
+        </section>
+        
+        <section id="output-page" class="hidden min-h-screen pt-24 pb-12 px-4">
+             <div class="max-w-5xl mx-auto"><h3 class="text-4xl font-bold text-center mb-8">Your AI-Generated Ayurvedic Diet Chart</h3><div id="diet-chart-content" class="card p-6 sm:p-8 md:p-12 rounded-2xl no-hover"></div><div class="text-center mt-8 flex flex-col sm:flex-row gap-4 justify-center"><button id="reset-btn" class="cta-button text-white font-bold py-3 px-8 rounded-lg text-lg">Create Another Plan</button><button id="download-pdf-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg text-lg flex items-center justify-center gap-2 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Download as PDF</button></div></div>
+        </section>
+
+        <section id="contact-page" class="hidden min-h-screen pt-24 pb-12 px-4">
+            <div class="container mx-auto max-w-4xl"><button id="contact-back-btn" class="flex items-center gap-2 text-lg text-gray-400 hover:text-white transition mb-8"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>Back</button><h2 class="text-4xl font-bold text-center -mt-12 mb-12">Contact Us</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-12"><div class="space-y-6"><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-4 gradient-text">Get in Touch</h3><p class="flex items-start gap-3 mb-3"><svg class="w-5 h-5 text-emerald-400 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><a href="mailto:work.swasthyaai@gmail.com" class="hover:underline">work.swasthyaai@gmail.com</a></p><p class="flex items-center gap-3 mb-3"><svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Mon - Fri, 10:00 AM - 8:00 PM IST</p><p class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-400 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Rajkot, Gujarat, India</p></div><div class="card p-6 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-2 gradient-text">Developed By</h3><p>SwasthyaAI Team</p></div></div><div><div class="card p-8 rounded-xl no-hover"><h3 class="text-2xl font-semibold mb-6">Send us a Message</h3><form id="contact-form"><div class="mb-4"><label for="contact-name" class="block mb-2">Your Name</label><input type="text" name="name" id="contact-name" class="w-full p-3 rounded-lg modal-input" required></div><div class="mb-4"><label for="contact-email" class="block mb-2">Your Email</label><input type="email" name="email" id="contact-email" class="w-full p-3 rounded-lg modal-input" required></div><div class="mb-6"><label for="contact-message" class="block mb-2">Message</label><textarea id="contact-message" name="message" rows="4" class="w-full p-3 rounded-lg modal-input" required></textarea></div><button type="submit" class="w-full cta-button text-white font-bold py-3 rounded-lg text-lg">Send Message</button></form></div></div></div></div>
+        </section>
+
+        <section id="team-page" class="hidden min-h-screen pt-24 pb-12 px-4">
+             <div class="container mx-auto max-w-5xl"><button id="team-back-btn" class="flex items-center gap-2 text-lg text-gray-400 hover:text-white transition mb-8"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>Back</button><h2 class="text-4xl font-bold text-center -mt-12 mb-12">The SwasthyaAI Team</h2><div id="team-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
+        </section>
+    </div>
+
+    <footer class="border-t border-gray-800 py-8">
+        <div class="container mx-auto px-4 text-center text-gray-500">
+            <div class="flex justify-center gap-6 mb-4">
+                 <a href="#" id="footer-contact-btn" class="hover:text-emerald-400 transition">Contact Us</a>
+                 <a href="#" id="footer-team-btn" class="hover:text-emerald-400 transition">Meet Our Team</a>
+            </div>
+            <p>&copy; 2025 SwasthyaAI. All Rights Reserved. Developed by Harikrishna Vora.</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DESTRUCTURE JSPDF ---
+        const { jsPDF } = window.jspdf;
+
+        // --- UI ELEMENTS ---
+        const mainContent = document.getElementById('main-content'), appContent = document.getElementById('app-content'), authPage = document.getElementById('auth-page'), loginFormContainer = document.getElementById('login-form-container'), signupFormContainer = document.getElementById('signup-form-container'), verificationPage = document.getElementById('verification-page'), generatorPage = document.getElementById('generator-page'), outputPage = document.getElementById('output-page'), profilePage = document.getElementById('profile-page'), subscriptionPage = document.getElementById('subscription-page'), contactPage = document.getElementById('contact-page'), teamPage = document.getElementById('team-page'), generatorInputSection = document.getElementById('generator-input-section'), limitReachedSection = document.getElementById('limit-reached-section'), dietChartContent = document.getElementById('diet-chart-content'), planLimitText = document.getElementById('plan-limit-text'), generatorGreeting = document.getElementById('generator-greeting'), verifyError = document.getElementById('verify-error'), passwordStrengthBar = document.getElementById('password-strength-bar'), passwordStrengthText = document.getElementById('password-strength-text'), teamGrid = document.getElementById('team-grid');
+        const getPlanNavBtn = document.getElementById('get-plan-nav-btn'), getPlanMobileBtn = document.getElementById('get-plan-mobile-btn'), getPlanHeroBtn = document.getElementById('get-plan-hero-btn'), logoBtn = document.getElementById('logo-btn'), logoutBtn = document.getElementById('logout-btn'), profileNavBtn = document.getElementById('profile-nav-btn'), profileMobileBtn = document.getElementById('profile-mobile-btn'), showSignupBtn = document.getElementById('show-signup-btn'), showLoginBtn = document.getElementById('show-login-btn'), generatePlanBtn = document.getElementById('generate-plan-btn'), resetBtn = document.getElementById('reset-btn'), mobileMenuButton = document.getElementById('mobile-menu-button'), mobileMenu = document.getElementById('mobile-menu'), editProfileBtn = document.getElementById('edit-profile-btn'), saveProfileBtn = document.getElementById('save-profile-btn'), cancelEditBtn = document.getElementById('cancel-edit-btn'), profileViewButtons = document.getElementById('profile-view-buttons'), profileEditButtons = document.getElementById('profile-edit-buttons'), profileBackBtn = document.getElementById('profile-back-btn'), subscribeNowBtn = document.getElementById('subscribe-now-btn'), subscriptionBackBtn = document.getElementById('subscription-back-btn'), footerContactBtn = document.getElementById('footer-contact-btn'), contactBackBtn = document.getElementById('contact-back-btn'), footerTeamBtn = document.getElementById('footer-team-btn'), teamBackBtn = document.getElementById('team-back-btn'), downloadPdfBtn = document.getElementById('download-pdf-btn');
+        const loginForm = document.getElementById('login-form'), signupForm = document.getElementById('signup-form'), profileForm = document.getElementById('profile-form'), verifyForm = document.getElementById('verify-form'), contactForm = document.getElementById('contact-form');
+        const signupPasswordInput = document.getElementById('signup-password');
+        
+        // --- STATE & DATA ---
+        let isLoggedIn = JSON.parse(localStorage.getItem('isLoggedIn') || 'false');
+        let freePlansGenerated = parseInt(localStorage.getItem('freePlansGenerated') || '0');
+        const MAX_FREE_PLANS = 10;
+        let userProfileData = JSON.parse(localStorage.getItem('userProfileData')) || {};
+        let tempVerificationCode = '';
+        let tempUserData = {};
+        const defaultProfile = { full_name: '', email: '', age: 30, gender: 'Male', height_cm: 170, weight_kg: 70, chronic_conditions: '', allergies: '', occupation: 'Office/Sedentary', food_preference: 'Vegetarian', cuisine: 'Indian', water_intake: '1-2 liters', prakriti: 'Undetermined', agni: 'Undetermined' };
+
+        // --- CORE FUNCTIONS ---
+        const showPage = (pageToShow) => { mainContent.classList.add('hidden'); appContent.classList.remove('hidden'); [authPage, verificationPage, generatorPage, outputPage, profilePage, subscriptionPage, contactPage, teamPage].forEach(page => page.classList.add('hidden')); pageToShow.classList.remove('hidden'); window.scrollTo(0, 0); };
+        const showHomePage = () => { appContent.classList.add('hidden'); mainContent.classList.remove('hidden'); };
+        const updateUIforAuthState = () => { if (isLoggedIn) { getPlanNavBtn.classList.add('hidden'); logoutBtn.classList.remove('hidden'); profileNavBtn.classList.remove('hidden'); profileMobileBtn.classList.remove('hidden'); } else { getPlanNavBtn.classList.remove('hidden'); logoutBtn.classList.add('hidden'); profileNavBtn.classList.add('hidden'); profileMobileBtn.classList.add('hidden'); } };
+
+        // --- SECURITY ---
+        const sanitizeInput = (input) => { const div = document.createElement('div'); div.textContent = input; return div.innerHTML; };
+        const checkPasswordStrength = (password) => { let score = 0; if (password.length >= 8) score++; if (/[A-Z]/.test(password)) score++; if (/[0-9]/.test(password)) score++; if (/[^A-Za-z0-9]/.test(password)) score++; return score; };
+        signupPasswordInput.addEventListener('input', () => { const password = signupPasswordInput.value; const score = checkPasswordStrength(password); const widthMap = ['0%', '25%', '50%', '75%', '100%']; const colorMap = ['bg-red-500', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-emerald-500']; const textMap = ['', 'Weak', 'Medium', 'Good', 'Strong']; passwordStrengthBar.style.width = widthMap[score]; passwordStrengthBar.className = `rounded-full ${colorMap[score]}`; passwordStrengthText.textContent = textMap[score]; });
+
+        // --- PROFILE MANAGEMENT ---
+        const populateProfileForm = () => { Object.keys(userProfileData).forEach(key => { const el = document.getElementById(`profile-${key}`); if (el) el.value = userProfileData[key]; }); };
+        const setProfileEditMode = (isEditing) => { profileForm.querySelectorAll('input, select').forEach(input => { if (input.id !== 'profile-email') input.disabled = !isEditing; }); profileViewButtons.classList.toggle('hidden', isEditing); profileEditButtons.classList.toggle('hidden', !isEditing); };
+        const handleEditProfile = () => setProfileEditMode(true);
+        const handleCancelEdit = () => { populateProfileForm(); setProfileEditMode(false); };
+        const handleSaveProfile = (e) => { e.preventDefault(); const formData = new FormData(profileForm); for (let [key, value] of formData.entries()) { userProfileData[key.replace('profile-', '')] = sanitizeInput(value); } localStorage.setItem('userProfileData', JSON.stringify(userProfileData)); setProfileEditMode(false); };
+        
+        // --- AUTHENTICATION & VERIFICATION ---
+        const handleLogin = (e) => { e.preventDefault(); isLoggedIn = true; localStorage.setItem('isLoggedIn', 'true'); userProfileData = JSON.parse(localStorage.getItem('userProfileData')) || defaultProfile; userProfileData.email = sanitizeInput(document.getElementById('login-email').value); updateUIforAuthState(); navigateToGenerator(); };
+        const handleSignup = (e) => { e.preventDefault(); tempUserData = { ...defaultProfile, full_name: sanitizeInput(document.getElementById('signup-name').value), email: sanitizeInput(document.getElementById('signup-email').value) }; tempVerificationCode = Math.floor(100000 + Math.random() * 900000).toString(); alert(`Your verification code is: ${tempVerificationCode}\n\n(This is a simulation. In a real application, this code would be sent to ${tempUserData.email})`); showPage(verificationPage); };
+        const handleVerify = (e) => { e.preventDefault(); const enteredCode = sanitizeInput(document.getElementById('verify-code').value); if (enteredCode === tempVerificationCode) { verifyError.classList.add('hidden'); userProfileData = tempUserData; localStorage.setItem('userProfileData', JSON.stringify(userProfileData)); alert('Verification successful! Please log in to continue.'); showPage(authPage); loginFormContainer.classList.remove('hidden'); signupFormContainer.classList.add('hidden'); document.getElementById('login-email').value = userProfileData.email; } else { verifyError.textContent = 'Invalid code. Please try again.'; verifyError.classList.remove('hidden'); } };
+        const handleLogout = () => { isLoggedIn = false; localStorage.setItem('isLoggedIn', 'false'); updateUIforAuthState(); showHomePage(); };
+        
+        const navigateToAuth = () => showPage(authPage);
+        const navigateToGenerator = () => { generatorGreeting.textContent = `Namaste, ${userProfileData.full_name.split(' ')[0] || 'User'}!`; const plansLeft = MAX_FREE_PLANS - freePlansGenerated; planLimitText.textContent = `You have ${plansLeft} free plan ${plansLeft === 1 ? 'generation' : 'generations'} remaining.`; generatorInputSection.classList.toggle('hidden', freePlansGenerated >= MAX_FREE_PLANS); limitReachedSection.classList.toggle('hidden', freePlansGenerated < MAX_FREE_PLANS); showPage(generatorPage); };
+
+        // --- DIET GENERATION & PDF ---
+        const handleGeneratePlan = () => { if (freePlansGenerated >= MAX_FREE_PLANS) { navigateToGenerator(); return; } freePlansGenerated++; localStorage.setItem('freePlansGenerated', freePlansGenerated.toString()); const condition = (userProfileData.chronic_conditions || '').toLowerCase(); let planType; if (condition.includes('diabetes')) planType = 'diabetes'; else if (condition.includes('hypertension')) planType = 'hypertension'; else planType = 'wellness'; dietChartContent.innerHTML = generateDetailedPlan(planType); showPage(outputPage); };
+        
+        const detailedMealDatabase = {
+            'Vegetable Poha': { ingredients: 'Thick Poha (1 cup, ~80g), Chopped Onion & Mixed Veggies (½ cup), Peanuts (1 tbsp), Ghee (1 tsp), Mustard Seeds & Turmeric', insight: 'A light (Laghu) and hydrating meal to start the day with stable energy.' },
+            'Balanced Thali (Dal, Rice, Sabzi)': { ingredients: 'Toor Dal (1 bowl, ~150g cooked), Steamed Rice (1 bowl, ~150g cooked), Seasonal Sabzi (Gourd) (1 bowl), Green Salad (1 plate)', insight: 'A complete meal with all six Ayurvedic tastes for complete nourishment.' },
+            'Moong Dal Khichdi': { ingredients: 'Rice & Moong Dal (1 cup total, 1:1 ratio), Turmeric (½ tsp), Ghee (1 tsp)', insight: 'Tridoshic and cleansing, it resets the digestive system for restful sleep.' },
+            'Oats Upma': { ingredients: 'Rolled Oats (½ cup, ~50g), Chopped Vegetables (¼ cup), Ghee (1 tsp), Mustard Seeds', insight: 'Complex carbs offer sustained energy, preventing mid-morning energy dips.' },
+            'Rajma Chawal': { ingredients: 'Cooked Rajma (1 bowl, ~150g), Steamed Rice (1 bowl, ~150g), Cucumber Raita (1 small bowl)', insight: 'A grounding and protein-rich meal. The raita helps in digestion.' },
+            'Paneer Bhurji with Roti': { ingredients: 'Crumbled Paneer (100g), Onion & Tomato (½ cup), 2 Whole Wheat Rotis', insight: 'A satisfying, high-protein, and low-carb dinner.' },
+            'Moong Dal Cheela': { ingredients: 'Moong Dal Batter (1 cup), Chopped Onion & Coriander (2 tbsp), Ghee (for cooking)', insight: 'A protein-rich and gluten-free option that is very easy on the gut.' },
+            'Kadhi & Rice with Sprouts': { ingredients: 'Besan & Yogurt Kadhi (1 bowl), Steamed Rice (1 bowl), Steamed Sprouts (½ cup)', insight: 'A probiotic-rich meal supporting a healthy gut microbiome.' },
+            'Mixed Vegetable Soup': { ingredients: 'Seasonal Vegetables (1.5 cups), Ginger (½ inch), Black Pepper (a pinch)', insight: 'A warm, nourishing, and extremely light meal perfect for digestion before sleep.' },
+            'Fruit Smoothie with Nuts': { ingredients: '1 Banana, Milk (1 cup), Soaked Almonds (5) & Walnuts (2)', insight: 'Provides natural energy and healthy fats essential for brain function during work.' },
+            'Chole & Baked Bhature': { ingredients: 'Chickpea Curry (1 bowl, ~150g), 2 Baked Whole Wheat Bhature', insight: 'Baking the bhature instead of frying makes this satisfying meal much lighter.' },
+            'Lauki Sabzi with Roti': { ingredients: 'Bottle Gourd (1 cup, ~150g), 2 Whole Wheat Rotis', insight: 'Bottle gourd is cooling and 90% water, making it ideal for a light, hydrating dinner.' },
+            'Idli with Sambhar': { ingredients: '2-3 Steamed Rice Idlis, Vegetable Sambhar (1 bowl)', insight: 'Being fermented and steamed, this meal is extremely easy to digest.' },
+            'Balanced Thali (Dal, Rice, Bhindi)': { ingredients: 'Toor Dal (1 bowl), Steamed Rice (1 bowl), Bhindi (Okra) Sabzi (1 bowl)', insight: 'Bhindi is fibrous and helps lubricate the intestines, aiding digestion.' },
+            'Vegetable Dalia': { ingredients: 'Broken Wheat (Dalia) (½ cup, ~60g), Mixed Vegetables (½ cup)', insight: 'High in fiber and nutrients, an excellent light and warming dinner.' },
+            'Thepla with Curd': { ingredients: '2 Methi (Fenugreek) Theplas, Fresh Curd (1 small bowl)', insight: 'Methi is excellent for digestion and helps in balancing blood sugar.' },
+            'Balanced Thali (Mixed Dal)': { ingredients: 'Mixed Lentils (1 bowl, ~150g), Steamed Rice (1 bowl), Gourd Sabzi (1 bowl)', insight: 'Using a mix of lentils provides a complete amino acid profile.' },
+            'Vegetable Pulao with Raita': { ingredients: 'Basmati Rice (1 cup, ~100g), Mixed Veggies (¾ cup), Cucumber Raita', insight: 'A flavorful one-pot meal that is both satisfying and balanced.' },
+            'Masala Dosa': { ingredients: '1 Masala Dosa with Sambhar and Coconut Chutney', insight: 'A delicious and satisfying meal to enjoy on a day of rest.' },
+            'Light Dinner': { ingredients: 'A simple bowl of Moong Dal Khichdi or Mixed Vegetable Soup', insight: 'Keeping Sunday dinner light ensures a fresh start for the week.' }
+        };
+
+        const createMealCard = (mealType, mealName) => { const details = detailedMealDatabase[mealName] || { ingredients: 'As per preference', insight: 'Enjoy a balanced meal.' }; return `<div class="p-4 bg-gray-800/50 rounded-lg border border-gray-700"><h5 class="font-bold text-lg text-emerald-400">${mealType} (Approx. ${mealType === 'Breakfast' ? '8 AM' : mealType === 'Lunch' ? '1 PM' : '7 PM'})</h5><p class="text-xl font-semibold text-white mt-1">${mealName}</p><ul class="text-sm text-gray-400 mt-2 list-disc list-inside"><strong class="text-gray-300 list-none">Ingredients:</strong><li>${details.ingredients.replace(/, /g, '</li><li>')}</li></ul><p class="text-sm text-amber-300/80 mt-2"><em><strong>Ayurvedic Insight:</strong> ${details.insight}</em></p></div>`; };
+        const createLifestyleTips = (title, tip1, tip2, tip3) => `<div class="mt-8 pt-6 border-t border-gray-700"><h4 class="text-2xl font-bold mb-4 gradient-text">${title}</h4><ul class="list-disc list-inside text-gray-300 space-y-2 text-lg"><li><strong>Sip Warm Water:</strong> Drink warm water or herbal teas throughout the day. Avoid iced beverages.</li><li><strong>Mindful Eating:</strong> Eat without distractions and chew your food thoroughly.</li><li><strong>Maintain Timings:</strong> Try to eat your meals at the same time every day to regulate your digestive cycle.</li><li><strong>Activity:</strong> ${tip1}</li><li><strong>Mindfulness:</strong> ${tip2}</li><li><strong>General Tip:</strong> ${tip3}</li></ul></div>`;
+        const resetDayCounterAndGenerate = () => { dayCounter = 0; handleGeneratePlan(); };
+
+        const generateDetailedPlan = (planType) => {
+            const greeting = `<h3 class="text-3xl font-bold mb-3">A Personal Plan for ${userProfileData.full_name}</h3>`;
+            let planContent;
+            if (planType === 'wellness') {
+                planContent = generateWeeklyWellnessPlan();
+            } else {
+                let insights, day1, day2, day3, lifestyle;
+                let dayCounter = 0;
+                const createDayPlan = (breakfast, lunch, dinner) => { dayCounter++; return `<div class="mb-8"><h4 class="text-2xl font-bold mb-4 gradient-text border-b-2 border-gray-700 pb-2">Day ${dayCounter}</h4><div class="grid grid-cols-1 lg:grid-cols-3 gap-4">${createMealCard('Breakfast', breakfast)}${createMealCard('Lunch', lunch)}${createMealCard('Dinner', dinner)}</div></div>`; };
+                switch(planType) {
+                    case 'diabetes':
+                        insights = `<div class="mb-6 text-amber-300/80 p-4 bg-amber-900/20 rounded-lg"><strong>AI Insight:</strong> Based on your profile indicating diabetes, this 3-day targeted plan focuses on low-glycemic foods to ensure stable blood sugar. By analyzing similar cases, we predict a noticeable improvement in energy levels within 2 weeks.</div>`;
+                        day1 = createDayPlan('Barley Porridge', 'Mixed Vegetable Sabzi with Ragi Roti', 'Lentil Soup (Dal)');
+                        day2 = createDayPlan('Oats Upma', 'Chickpea Salad with Cucumber and Tomato', 'Grilled Paneer with Steamed Greens');
+                        day3 = createDayPlan('Moong Dal Cheela', 'Quinoa Khichdi with Buttermilk', 'Stir-fried Tofu with Broccoli');
+                        lifestyle = createLifestyleTips('Care to Follow During Your Diet', 'Regular walking (30 mins post-meal)', 'Monitor blood sugar regularly', 'Practice deep breathing to manage stress.');
+                        break;
+                    case 'hypertension':
+                        insights = `<div class="mb-6 text-sky-300/80 p-4 bg-sky-900/20 rounded-lg"><strong>AI Insight:</strong> For your hypertension, this 3-day targeted diet emphasizes low-sodium, high-potassium foods. Cooling ingredients are prioritized. Similar profiles have shown a trend towards healthier BP readings after 3-4 weeks of adherence.</div>`;
+                        day1 = createDayPlan('Vegetable Poha (low salt)', 'Bottle Gourd (Lauki) Sabzi with Jowar Roti', 'Spinach and Garlic Soup');
+                        day2 = createDayPlan('Cucumber & Mint Smoothie', 'Large salad with grilled chicken/tofu', 'Baked Fish with Asparagus');
+                        day3 = createDayPlan('Oatmeal with Banana and Walnuts', 'Moong Dal Khichdi with a side of yogurt', 'Pumpkin Soup');
+                        lifestyle = createLifestyleTips('Care to Follow During Your Diet', 'Drink coconut water or beetroot juice.', 'Avoid excessive salt and caffeine.', 'Engage in calming activities like listening to music.');
+                        break;
+                }
+                planContent = insights + day1 + day2 + day3 + lifestyle;
+            }
+            return greeting + planContent;
+        };
+
+        const generateWeeklyWellnessPlan = () => {
+            let planHTML = `<div class="mb-6 text-emerald-300/80 p-4 bg-emerald-900/20 rounded-lg"><strong>AI Insight:</strong> This is a foundational 7-day wellness plan designed to balance your system and improve Agni (digestive fire), especially for a sedentary lifestyle. Following this consistently can lead to improved energy and digestion within 4-6 weeks.</div>`;
+            const weeklyMeals = [
+                { day: 'Monday', b: 'Vegetable Poha', l: 'Balanced Thali (Dal, Rice, Sabzi)', d: 'Moong Dal Khichdi' },
+                { day: 'Tuesday', b: 'Oats Upma', l: 'Rajma Chawal', d: 'Paneer Bhurji with Roti' },
+                { day: 'Wednesday', b: 'Moong Dal Cheela', l: 'Kadhi & Rice with Sprouts', d: 'Mixed Vegetable Soup' },
+                { day: 'Thursday', b: 'Fruit Smoothie with Nuts', l: 'Chole & Baked Bhature', d: 'Lauki Sabzi with Roti' },
+                { day: 'Friday', b: 'Idli with Sambhar', l: 'Balanced Thali (Dal, Rice, Bhindi)', d: 'Vegetable Dalia' },
+                { day: 'Saturday', b: 'Thepla with Curd', l: 'Balanced Thali (Mixed Dal)', d: 'Vegetable Pulao with Raita' },
+                { day: 'Sunday', b: 'Masala Dosa', l: 'A hearty seasonal lunch of your choice', d: 'Light Dinner' }
+            ];
+            weeklyMeals.forEach(day => {
+                planHTML += `<div class="mb-8"><h4 class="text-2xl font-bold mb-4 gradient-text border-b-2 border-gray-700 pb-2">${day.day}</h4><div class="grid grid-cols-1 lg:grid-cols-3 gap-4">${createMealCard('Breakfast', day.b)}${createMealCard('Lunch', day.l)}${createMealCard('Dinner', day.d)}</div></div>`;
+            });
+            planHTML += createLifestyleTips('Timeline & Next Steps', 'Follow this 7-day cycle consistently to establish a routine.', 'After 4 weeks, re-evaluate and generate a new plan.', 'Note any changes in your energy levels, digestion, and sleep.');
+            return planHTML;
+        };
+
+        // --- PDF DOWNLOAD ---
+        const handleDownloadPdf = () => { 
+            try {
+                const { jsPDF } = window.jspdf;
+                const dietPlanElement = document.getElementById('diet-chart-content');
+                const buttonsToHide = dietPlanElement.querySelectorAll('button'); 
+                buttonsToHide.forEach(btn => btn.style.display = 'none'); 
+                html2canvas(dietPlanElement, { backgroundColor: '#0c0a18', scale: 2 }).then(canvas => { 
+                    const imgData = canvas.toDataURL('image/png'); 
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); 
+                    const pdfWidth = pdf.internal.pageSize.getWidth(); 
+                    const pdfHeight = pdf.internal.pageSize.getHeight(); 
+                    const canvasWidth = canvas.width; 
+                    const canvasHeight = canvas.height; 
+                    const ratio = canvasWidth / canvasHeight; 
+                    const imgWidth = pdfWidth - 20; 
+                    const imgHeight = imgWidth / ratio; 
+                    let heightLeft = imgHeight; 
+                    let position = 10; 
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight); 
+                    heightLeft -= pdfHeight; 
+                    while (heightLeft >= 0) { 
+                        position = heightLeft - imgHeight + 10; 
+                        pdf.addPage(); 
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight); 
+                        heightLeft -= pdfHeight; 
+                    } 
+                    pdf.save(`SwasthyaAI-Diet-Plan-${userProfileData.full_name}.pdf`); 
+                    buttonsToHide.forEach(btn => btn.style.display = 'block'); 
+                });
+            } catch (error) {
+                console.error("PDF Generation failed:", error);
+                alert("Could not generate PDF. Please check your internet connection and try again.");
+            }
+        };
+        
+        // --- TEAM PAGE ---
+        const showTeamPage = () => {
+            try {
+                const teamMembers = [ { name: 'Harikrishna Vora', role: 'Web developer, AI/ML Engineer', gender: 'male' }, { name: 'Dixita Balapuriya', role: 'UI/UX Designer, Data Analyst', gender: 'female' }, { name: 'Bhaktiba Jadeja', role: 'Data Analytics', gender: 'female' }, { name: 'Kalp Mehta', role: 'Data Scientist', gender: 'male' }, { name: 'Kishan Viradiya', role: 'AI/ML Engineer', gender: 'male' }, { name: 'Madhav Patoliya', role: 'Database Manager', gender: 'male' } ];
+                teamGrid.innerHTML = '';
+                teamMembers.forEach((member, index) => {
+                    const imgUrl = `https://placehold.co/400x400/${member.gender === 'male' ? '3b82f6' : '10b981'}/FFFFFF/png?text=${member.name.charAt(0)}&font=poppins`;
+                    const card = document.createElement('div');
+                    card.className = 'card team-card text-center p-6 rounded-xl';
+                    card.style.animationDelay = `${index * 100}ms`;
+                    card.innerHTML = `<img src="${imgUrl}" alt="${member.name}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-700"><h3 class="text-2xl font-semibold">${member.name}</h3><p class="gradient-text">${member.role}</p>`;
+                    teamGrid.appendChild(card);
+                });
+                showPage(teamPage);
+                if (window.confetti) {
+                    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+                }
+            } catch (error) {
+                console.error("Team Page failed:", error);
+                alert("Could not load team page. Please check your internet connection.");
+            }
+        };
+
+        // --- EVENT LISTENERS ---
+        [getPlanNavBtn, getPlanMobileBtn, getPlanHeroBtn].forEach(btn => btn.addEventListener('click', (e) => { e.preventDefault(); isLoggedIn ? navigateToGenerator() : navigateToAuth(); }));
+        logoBtn.addEventListener('click', (e) => { e.preventDefault(); showHomePage(); });
+        logoutBtn.addEventListener('click', handleLogout);
+        showSignupBtn.addEventListener('click', () => { loginFormContainer.classList.add('hidden'); signupFormContainer.classList.remove('hidden'); });
+        showLoginBtn.addEventListener('click', () => { signupFormContainer.classList.add('hidden'); loginFormContainer.classList.remove('hidden'); });
+        loginForm.addEventListener('submit', handleLogin);
+        signupForm.addEventListener('submit', handleSignup);
+        verifyForm.addEventListener('submit', handleVerify);
+        generatePlanBtn.addEventListener('click', resetDayCounterAndGenerate);
+        resetBtn.addEventListener('click', navigateToGenerator);
+        profileNavBtn.addEventListener('click', () => { populateProfileForm(); showPage(profilePage); });
+        profileMobileBtn.addEventListener('click', () => { populateProfileForm(); showPage(profilePage); });
+        editProfileBtn.addEventListener('click', handleEditProfile);
+        cancelEditBtn.addEventListener('click', handleCancelEdit);
+        saveProfileBtn.addEventListener('click', handleSaveProfile);
+        profileBackBtn.addEventListener('click', navigateToGenerator);
+        subscribeNowBtn.addEventListener('click', () => showPage(subscriptionPage));
+        subscriptionBackBtn.addEventListener('click', navigateToGenerator);
+        footerContactBtn.addEventListener('click', (e) => { e.preventDefault(); showPage(contactPage); });
+        contactBackBtn.addEventListener('click', () => isLoggedIn ? navigateToGenerator() : showHomePage());
+        footerTeamBtn.addEventListener('click', (e) => { e.preventDefault(); showTeamPage(); });
+        teamBackBtn.addEventListener('click', () => isLoggedIn ? navigateToGenerator() : showHomePage());
+        downloadPdfBtn.addEventListener('click', handleDownloadPdf);
+        document.querySelectorAll('.purchase-btn').forEach(btn => btn.addEventListener('click', () => alert('Redirecting to payment gateway... (Simulation)')));
+        mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        contactForm.addEventListener('submit', (e) => { e.preventDefault(); alert('Thank you for your message! We will get back to you shortly. (Simulation)'); contactForm.reset(); });
+        
+        // --- ANIMATIONS & EFFECTS ---
+        const spotlight = document.getElementById('spotlight'); if(spotlight) { window.addEventListener('mousemove', e => { spotlight.style.transform = `translate(${e.clientX - 200}px, ${e.clientY - 200}px)`; }); }
+        const canvas = document.getElementById('background-canvas'); if(canvas) { const ctx = canvas.getContext('2d'); let width, height, particles = []; const setup = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; particles = []; const particleCount = Math.floor(width * height / 25000); for (let i = 0; i < particleCount; i++) { particles.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 2 + 1, vx: Math.random() * 0.5 - 0.25, vy: Math.random() * 0.5 - 0.25, color: `rgba(${Math.random() > 0.5 ? '16, 185, 129' : '59, 130, 246'}, ${Math.random() * 0.5 + 0.2})` }); } }; const draw = () => { if (!ctx) return; ctx.clearRect(0, 0, width, height); particles.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill(); p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > width) p.vx *= -1; if (p.y < 0 || p.y > height) p.vy *= -1; }); requestAnimationFrame(draw); }; window.addEventListener('resize', setup); setup(); requestAnimationFrame(draw); }
+        
+        // --- INITIALIZATION ---
+        if (isLoggedIn) populateProfileForm();
+        updateUIforAuthState();
+    });
+    </script>
+</body>
+</html>
